@@ -1,0 +1,26 @@
+{
+  "name": "invoices_cronjob",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Cronjob zum Download, Merge und Versand von Eingangsrechnungen.",
+  "scripts": {
+    "start": "node src/apps/cron/main.js",
+    "once": "node src/apps/cron/main.js --once",
+    "ui": "node src/apps/ui/main.js",
+    "docker:build": "docker build -t invoices-cronjob .",
+    "docker:up": "docker compose up --build",
+    "docker:up:detached": "docker compose up --build -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f",
+    "sync:bootstrap": "mkdir -p public/vendor && cp node_modules/bootstrap/dist/css/bootstrap.min.css public/vendor/bootstrap.min.css && cp node_modules/vue/dist/vue.esm-browser.prod.js public/vendor/vue.esm-browser.prod.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "bootstrap": "^5.3.8",
+    "dotenv": "^16.6.1",
+    "node-cron": "^4.2.1",
+    "nodemailer": "^8.0.5",
+    "pdf-lib": "^1.17.1",
+    "vue": "^3.5.22"
+  }
+}

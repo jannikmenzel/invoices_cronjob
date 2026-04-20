@@ -1,0 +1,31 @@
+services:
+  invoices-cronjob:
+    image: invoices-cronjob:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: invoices-cronjob
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      UI_ENABLED: "true"
+      UI_HOST: 0.0.0.0
+      UI_PORT: "3030"
+      SETTINGS_FILE_PATH: /app/config/app-settings.json
+      TEMP_DIR: /tmp/invoices_cronjob
+      KEEP_TEMP_FILES: "false"
+    ports:
+      - "3030:3030"
+    volumes:
+      - ./config:/app/config
+      - ./temp:/tmp/invoices_cronjob
+    restart: unless-stopped
+    init: true
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3030/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+

@@ -1,0 +1,10 @@
+.git
+.idea
+node_modules
+.env
+*.log
+.DS_Store
+config/
+temp/
+test/
+README.md
