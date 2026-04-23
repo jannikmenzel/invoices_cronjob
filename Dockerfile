@@ -11,7 +11,8 @@ ENV NODE_ENV=production \
     KEEP_TEMP_FILES=false
 
 COPY package*.json ./
-RUN npm ci --omit=dev
+RUN npm ci --omit=dev \
+    && apk add --no-cache ghostscript
 
 COPY public ./public
 COPY src ./src
