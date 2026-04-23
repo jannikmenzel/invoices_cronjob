@@ -141,6 +141,18 @@ function getProfiles(appSettings) {
     return profiles;
 }
 
+function parseDocuments(documents) {
+    if (!documents) return ['Eingangsrechnung'];
+    if (Array.isArray(documents)) {
+        return documents;
+    }
+    if (typeof documents === 'string') {
+        return parseCsv(documents);
+    }
+
+    return ['Eingangsrechnung'];
+}
+
 function loadConfigForProfile(appSettings, profile) {
     const objectNumbers = parseCsv(profile.objectNumbers);
     if (objectNumbers.length === 0) {
@@ -152,12 +164,16 @@ function loadConfigForProfile(appSettings, profile) {
         throw new Error(`Profil ${profile.name}: MAIL_TO muss mindestens eine E-Mail-Adresse enthalten.`);
     }
 
+    const documents = parseDocuments(profile.documents);
+    console.log(`[config] Profil ${profile.name}: Dokumententypen = ${JSON.stringify(documents)}`);
+
     const base = buildBaseConfig(appSettings);
     return {
         ...base,
         ownerName: profile.name,
         cronExpression: String(profile.cronExpression || '').trim(),
         objectNumbers,
+        documents,
         mailTo,
         mailSubject: String(profile.mailSubject || '').trim(),
         mailText: String(profile.mailText || '').trim(),

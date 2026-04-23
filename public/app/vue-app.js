@@ -468,6 +468,24 @@ const App = {
                                                 </div>
 
                                                 <div class="col-12 col-lg-6">
+                                                    <label class="form-label">Dokumententyp(en)</label>
+                                                    <div>
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox" id="doc-eingangsrechnung" value="Eingangsrechnung" v-model="activeProfile.documents">
+                                                            <label class="form-check-label" for="doc-eingangsrechnung">Eingangsrechnung</label>
+                                                        </div>
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox" id="doc-kontoauszug" value="Kontoauszug" v-model="activeProfile.documents">
+                                                            <label class="form-check-label" for="doc-kontoauszug">Kontoauszug</label>
+                                                        </div>
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox" id="doc-abrechnung" value="Abrechnung/Wirtschaftsplan/EÜ-Abr." v-model="activeProfile.documents">
+                                                            <label class="form-check-label" for="doc-abrechnung">Abrechnung/Wirtschaftsplan/EÜ-Abr.</label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-12 col-lg-6">
                                                     <label class="form-label" for="mailTo">Adressat(en)</label>
                                                     <input class="form-control" id="mailTo" v-model="activeProfile.mailTo" placeholder="max@example.com,anna@example.com" />
                                                 </div>

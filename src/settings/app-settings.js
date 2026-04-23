@@ -10,6 +10,7 @@ const DEFAULT_APP_SETTINGS = {
 const DEFAULT_PROFILE = {
     name: '',
     objectNumbers: '',
+    documents: 'Eingangsrechnung',
     mailTo: '',
     mailSubject: '',
     mailText: '',
@@ -24,6 +25,16 @@ function normalizeCsv(value) {
         .map((entry) => entry.trim())
         .filter(Boolean)
         .join(',');
+}
+
+function normalizeDocuments(value) {
+    if (!value) return 'Eingangsrechnung';
+
+    if (Array.isArray(value)) {
+        return value.join(',');
+    }
+
+    return normalizeCsv(value);
 }
 
 function isIsoDateOnly(value) {
@@ -52,6 +63,7 @@ function normalizeProfile(rawProfile, index, legacyDefaults = {}) {
         id: String(rawProfile?.id || '').trim() || toProfileId(index, name),
         name,
         objectNumbers: normalizeCsv(rawProfile?.objectNumbers),
+        documents: normalizeDocuments(rawProfile?.documents),
         mailTo: normalizeCsv(rawProfile?.mailTo),
         mailSubject: String(rawProfile?.mailSubject || legacyDefaults.mailSubject || DEFAULT_PROFILE.mailSubject).trim(),
         mailText: String(rawProfile?.mailText || legacyDefaults.mailText || DEFAULT_PROFILE.mailText).trim(),
@@ -87,6 +99,7 @@ function migrateLegacyProfiles(input) {
                 id: 'standard-1',
                 name: 'Standard',
                 objectNumbers: legacyObjectNumbers,
+                documents: input.documents || 'Eingangsrechnung',
                 mailTo: legacyMailTo
             },
             0,
@@ -110,6 +123,10 @@ function validateProfile(profile, index) {
 
     if (!profile.objectNumbers) {
         throw new Error(`Profil ${index + 1} (${profile.name}): Mindestens eine Objektnummer ist erforderlich.`);
+    }
+
+    if (profile.documents && typeof profile.documents !== 'string') {
+        throw new Error(`Profil ${index + 1} (${profile.name}): documents muss ein String oder Array sein.`);
     }
 
     if (!profile.mailTo) {
@@ -197,6 +214,7 @@ async function ensureAppSettings(settingsPath, env = process.env) {
         id: 'max-mustermann-1',
         name: 'Max Mustermann',
         objectNumbers: String(env.OBJEKTNUMMERN || '').trim(),
+        documents: String(env.DOCUMENTS || 'Eingangsrechnung').trim(),
         mailTo: String(env.MAIL_TO || '').trim(),
         mailSubject: String(env.MAIL_SUBJECT || '').trim(),
         mailText: String(env.MAIL_TEXT || '').trim(),

@@ -91,12 +91,14 @@ function authHeaders(apiKey) {
 
 /**
  * @param {DvelopDocument} doc
+ * @param {string} dateFieldName
  * @returns {Date|null}
  */
-function extractInvoiceDate(doc) {
+function extractDate(doc, dateFieldName) {
     const raw = doc?.displayProperties
-        ?.find((prop) => prop?.name === 'Rechnungsdatum')
+        ?.find((prop) => prop?.name === dateFieldName)
         ?.value;
+
     return parseInvoiceDate(raw);
 }
 
@@ -179,10 +181,10 @@ async function resolveDownloadCandidates(doc, apiKey, baseUrl, fallbackRepoId) {
     return candidates;
 }
 
-async function searchInvoicesByObjectNumber({scriptUrl, apiKey, objectNumber}) {
+async function searchDocumentsByObjectNumberAndType({scriptUrl, apiKey, objectNumber, documentTypes}) {
     const searchParams = {
         mode: 'searchdoks',
-        searchcats: ['Eingangsrechnung'],
+        searchcats: documentTypes || [], // Nur die angegebenen Dokumententypen durchsuchen
         searchprops: {
             Objektnummer: objectNumber
         }
@@ -205,13 +207,14 @@ async function searchInvoicesByObjectNumber({scriptUrl, apiKey, objectNumber}) {
 /**
  * @param {DvelopDocument[]} documents
  * @param {{ start: Date, end: Date }} range
+ * @param {string} dateFieldName
  * @returns {DvelopDocument[]}
  */
-function filterInvoicesForRange(documents, range) {
+function filterDocumentsForRange(documents, range, dateFieldName) {
     return documents.filter((doc) => {
-        const invoiceDate = extractInvoiceDate(doc);
-        if (!invoiceDate) return false;
-        return isDateWithinUtcRange(invoiceDate, range);
+        const docDate = extractDate(doc, dateFieldName);
+        if (!docDate) return false;
+        return isDateWithinUtcRange(docDate, range);
     });
 }
 
@@ -259,8 +262,7 @@ async function downloadPdf(doc, apiKey, baseUrl, fallbackRepoId = null) {
 }
 
 module.exports = {
-    searchInvoicesByObjectNumber,
-    filterInvoicesForRange,
+    searchDocumentsByObjectNumberAndType,
+    filterDocumentsForRange,
     downloadPdf
 };
-

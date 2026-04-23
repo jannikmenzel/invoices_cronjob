@@ -32,10 +32,19 @@ export function normalizeCsv(value) {
 
 export function createProfile(base = {}, index = 1) {
     const id = base.id || `profil-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    let documents = base.documents;
+    if (!documents) {
+        documents = ['Eingangsrechnung'];
+    } else if (typeof documents === 'string') {
+        documents = documents.split(',').map((d) => d.trim()).filter(Boolean);
+    } else if (!Array.isArray(documents)) {
+        documents = ['Eingangsrechnung'];
+    }
     return {
         id,
         name: String(base.name || '').trim() || `Eigentümer ${index}`,
         objectNumbers: normalizeCsv(base.objectNumbers),
+        documents,
         mailTo: normalizeCsv(base.mailTo),
         mailSubject: String(base.mailSubject || '').trim(),
         mailText: String(base.mailText || '').trim(),
@@ -132,6 +141,7 @@ export function toProfilePayload(profile) {
         id: profile.id,
         name: String(profile.name || '').trim(),
         objectNumbers: normalizeCsv(profile.objectNumbers),
+        documents: Array.isArray(profile.documents) ? profile.documents.join(',') : normalizeCsv(profile.documents),
         mailTo: normalizeCsv(profile.mailTo),
         mailSubject: String(profile.mailSubject || '').trim(),
         mailText: String(profile.mailText || '').trim(),

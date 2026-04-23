@@ -1,17 +1,17 @@
 const nodemailer = require('nodemailer');
 
-async function sendMailWithAttachment({
-                                          config,
-                                          subject,
-                                          textBody,
-                                          htmlBody,
-                                          attachmentName,
-                                          attachmentBuffer,
-                                          inlineAttachments = []
-                                      }) {
-    if (attachmentBuffer.length > config.maxAttachmentBytes) {
+async function sendMailWithMultipleAttachments({
+                                                   config,
+                                                   subject,
+                                                   textBody,
+                                                   htmlBody,
+                                                   attachments = [],
+                                                   inlineAttachments = []
+                                               }) {
+    const totalSize = attachments.reduce((sum, att) => sum + (att.content?.length || 0), 0);
+    if (totalSize > config.maxAttachmentBytes) {
         throw new Error(
-            `Attachment ist zu groß (${attachmentBuffer.length} Bytes). Maximal erlaubt: ${config.maxAttachmentBytes} Bytes.`
+            `Anhänge sind zu groß (${totalSize} Bytes). Maximal erlaubt: ${config.maxAttachmentBytes} Bytes.`
         );
     }
 
@@ -29,6 +29,11 @@ async function sendMailWithAttachment({
         requireTLS: config.smtpRequireTls
     });
 
+    const allAttachments = [
+        ...attachments,
+        ...inlineAttachments
+    ];
+
     await transporter.sendMail({
         from: config.smtpFrom,
         to: config.mailTo,
@@ -36,18 +41,10 @@ async function sendMailWithAttachment({
         subject,
         text: textBody,
         html: htmlBody,
-        attachments: [
-            {
-                filename: attachmentName,
-                content: attachmentBuffer,
-                contentType: 'application/pdf'
-            },
-            ...inlineAttachments
-        ]
+        attachments: allAttachments
     });
 }
 
 module.exports = {
-    sendMailWithAttachment
+    sendMailWithMultipleAttachments
 };
-
