@@ -127,9 +127,9 @@ function buildBaseConfig(appSettings) {
         smtpPass: (process.env.SMTP_PASS || '').trim() || null,
         smtpFrom: required('SMTP_FROM'),
         mailCc: [],
-        maxAttachmentBytes: 3145728,
+        maxAttachmentBytes: Number(process.env.MAX_ATTACHMENT_BYTES) || 10485760,
         tempDir: path.join(os.tmpdir(), 'invoices_cronjob'),
-        keepTempFiles: false
+        keepTempFiles: parseBool(process.env.KEEP_TEMP_FILES, false)
     };
 }
 
