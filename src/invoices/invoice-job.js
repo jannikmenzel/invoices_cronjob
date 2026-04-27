@@ -160,7 +160,7 @@ async function runInvoiceJob(config) {
         documentGroups.push({
             documentType,
             count: downloadedDocs.length,
-            documents: downloadedDocs.map(d => ({ objectNumber: d.objectNumber, caption: d.caption })),
+            documents: downloadedDocs.map(d => ({objectNumber: d.objectNumber, caption: d.caption})),
             mergedPdf,
             mergedFilename
         });
@@ -225,7 +225,7 @@ async function runInvoiceJob(config) {
     return {
         sent: true,
         totalDocuments: documentGroups.reduce((sum, g) => sum + g.count, 0),
-        documentGroups: documentGroups.map(g => ({ type: g.documentType, count: g.count })),
+        documentGroups: documentGroups.map(g => ({type: g.documentType, count: g.count})),
         savedFiles: config.keepTempFiles ? savedFiles : []
     };
 }

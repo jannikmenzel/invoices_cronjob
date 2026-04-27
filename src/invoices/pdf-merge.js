@@ -1,5 +1,5 @@
-const { PDFDocument } = require('pdf-lib');
-const { execFile } = require('node:child_process');
+const {PDFDocument} = require('pdf-lib');
+const {execFile} = require('node:child_process');
 const fs = require('node:fs');
 
 async function mergePdfBuffers(pdfBuffers) {
@@ -10,7 +10,7 @@ async function mergePdfBuffers(pdfBuffers) {
     const target = await PDFDocument.create();
 
     for (const buffer of pdfBuffers) {
-        const source = await PDFDocument.load(buffer, { ignoreEncryption: true });
+        const source = await PDFDocument.load(buffer, {ignoreEncryption: true});
         const pages = await target.copyPages(source, source.getPageIndices());
 
         for (const page of pages) {

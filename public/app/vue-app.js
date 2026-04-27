@@ -1,16 +1,9 @@
-import {
-    computed,
-    createApp,
-    onMounted,
-    onUnmounted,
-    reactive,
-    watch
-} from '../vendor/vue.esm-browser.prod.js';
+import {computed, createApp, onMounted, onUnmounted, reactive, watch} from '../vendor/vue.esm-browser.prod.js';
 import {loadSettings, runOnceNow as runOnceNowApi, saveSettings} from './api.js';
 import {
     createProfile,
-    normalizeProfilesFromSettings,
     normalizeCsv,
+    normalizeProfilesFromSettings,
     parseClock,
     parseCronExpression,
     parseIsoDate,
