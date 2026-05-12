@@ -26,7 +26,7 @@ async function sendMailWithMultipleAttachments({
         auth: config.smtpUser
             ? {user: config.smtpUser, pass: config.smtpPass}
             : undefined,
-        requireTLS: config.smtpRequireTls
+        ignoreTLS: true,
     });
 
     const allAttachments = [
