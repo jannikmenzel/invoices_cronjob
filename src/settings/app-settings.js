@@ -248,7 +248,7 @@ async function ensureAppSettings(settingsPath, env = process.env) {
     };
 
     const seeded = {
-        profiles: seededProfile.objectNumbers || seededProfile.mailTo ? [seededProfile] : [],
+        profiles: [seededProfile],
         cronTimezone: String(env.CRON_TIMEZONE || DEFAULT_APP_SETTINGS.cronTimezone).trim()
     };
 

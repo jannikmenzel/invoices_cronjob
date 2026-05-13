@@ -102,7 +102,7 @@ function createUiServer({settingsPath, publicDir, onSettingsChanged, onRunNow}) 
                             isPasswordSet: true,
                             passwordHash: hashPassword(password)
                         }
-                    });
+                    }, {allowIncomplete: true});
                     if (typeof onSettingsChanged === 'function') {
                         await onSettingsChanged(newSettings);
                     }
