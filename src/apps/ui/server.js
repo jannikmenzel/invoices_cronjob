@@ -111,7 +111,7 @@ function createUiServer({settingsPath, publicDir, onSettingsChanged, onRunNow}) 
             }
 
             if (url.pathname === '/api/settings' && req.method === 'GET') {
-                const settings = await readAppSettings(settingsPath);
+                const settings = await readAppSettings(settingsPath, {allowIncomplete: true});
                 const safeSettings = {...settings};
                 if (safeSettings.auth) {
                     safeSettings.auth = {...safeSettings.auth, passwordHash: '[hidden]'};
