@@ -1,11 +1,30 @@
 const fs = require('node:fs/promises');
 const path = require('node:path');
 const cron = require('node-cron');
+const crypto = require('node:crypto');
 
 const DEFAULT_APP_SETTINGS = {
     profiles: [],
-    cronTimezone: 'Europe/Berlin'
+    cronTimezone: 'Europe/Berlin',
+    auth: {
+        isPasswordSet: false,
+        passwordHash: null
+    }
 };
+
+function hashPassword(password) {
+    const salt = crypto.randomBytes(16).toString('hex');
+    const hash = crypto.pbkdf2Sync(password, salt, 100000, 64, 'sha512').toString('hex');
+    return `${salt}:${hash}`;
+}
+
+function verifyPassword(password, stored) {
+    if (!stored) return false;
+    const [salt, hash] = stored.split(':');
+    if (!salt || !hash) return false;
+    const verifyHash = crypto.pbkdf2Sync(password, salt, 100000, 64, 'sha512').toString('hex');
+    return hash === verifyHash;
+}
 
 const DEFAULT_PROFILE = {
     name: '',
@@ -110,9 +129,14 @@ function migrateLegacyProfiles(input) {
 
 function normalizeAppSettings(input) {
     const source = input || {};
+    const sourceAuth = source.auth || {};
     return {
         profiles: migrateLegacyProfiles(source),
-        cronTimezone: String(source.cronTimezone || DEFAULT_APP_SETTINGS.cronTimezone).trim()
+        cronTimezone: String(source.cronTimezone || DEFAULT_APP_SETTINGS.cronTimezone).trim(),
+        auth: {
+            isPasswordSet: Boolean(sourceAuth.isPasswordSet),
+            passwordHash: sourceAuth.passwordHash || null
+        }
     };
 }
 
@@ -237,5 +261,7 @@ module.exports = {
     validateAppSettings,
     readAppSettings,
     writeAppSettings,
-    ensureAppSettings
+    ensureAppSettings,
+    hashPassword,
+    verifyPassword
 };

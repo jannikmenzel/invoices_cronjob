@@ -1,5 +1,5 @@
 import {computed, createApp, onMounted, onUnmounted, reactive, watch} from '../vendor/vue.esm-browser.prod.js';
-import {loadSettings, runOnceNow as runOnceNowApi, saveSettings} from './api.js';
+import {getAuthStatus, loadSettings, runOnceNow as runOnceNowApi, saveSettings, setStoredPassword, clearStoredPassword, setupPassword} from './api.js';
 import {
     createProfile,
     normalizeCsv,
@@ -110,7 +110,12 @@ const App = {
             },
             lastSavedPayloadSignature: '',
             statusMessage: '',
-            statusIsError: false
+            statusIsError: false,
+            needsSetup: false,
+            needsLogin: false,
+            loginPassword: '',
+            setupPassword: '',
+            setupPasswordConfirm: ''
         });
 
         const activeProfile = computed(() => state.profiles.find((profile) => profile.id === state.activeProfileId) || null);
@@ -327,7 +332,11 @@ const App = {
                 await loadSettingsFromServer();
                 setStatus('Neu geladen.');
             } catch (error) {
-                setStatus(error.message, true);
+                if (error.message.includes('Unauthorized') || error.message.includes('401')) {
+                    state.needsLogin = true;
+                } else {
+                    setStatus(error.message, true);
+                }
             }
         }
 
@@ -380,8 +389,73 @@ const App = {
 
         onMounted(() => {
             window.addEventListener('beforeunload', beforeUnloadHandler);
-            loadSettingsFromServer().catch((error) => setStatus(error.message, true));
+            checkAuthAndLoad();
         });
+
+        async function checkAuthAndLoad() {
+            try {
+                const auth = await getAuthStatus();
+                if (!auth.isPasswordSet) {
+                    state.needsSetup = true;
+                    return;
+                }
+            } catch (error) {
+                setStatus(error.message, true);
+                return;
+            }
+            state.needsLogin = true;
+        }
+
+        async function submitSetup() {
+            if (state.setupPassword.length < 4) {
+                setStatus('Passwort muss mindestens 4 Zeichen lang sein.', true);
+                return;
+            }
+            if (state.setupPassword !== state.setupPasswordConfirm) {
+                setStatus('Passwörter stimmen nicht überein.', true);
+                return;
+            }
+            try {
+                await setupPassword(state.setupPassword);
+                setStoredPassword(state.setupPassword);
+                state.needsSetup = false;
+                state.loginPassword = state.setupPassword;
+                state.setupPassword = '';
+                state.setupPasswordConfirm = '';
+                setStatus('Passwort gesetzt.');
+                loadSettingsFromServer().catch((error) => {
+                    clearStoredPassword();
+                    state.needsLogin = true;
+                    setStatus(error.message, true);
+                });
+            } catch (error) {
+                setStatus(error.message, true);
+            }
+        }
+
+        function logout() {
+            state.loginPassword = '';
+            clearStoredPassword();
+            state.needsLogin = true;
+        }
+
+        function submitLogin() {
+            if (!state.loginPassword) {
+                setStatus('Bitte Passwort eingeben.', true);
+                return;
+            }
+            setStoredPassword(state.loginPassword);
+            state.needsLogin = false;
+            loadSettingsFromServer().catch((error) => {
+                clearStoredPassword();
+                if (error.message.includes('Unauthorized') || error.message.includes('401')) {
+                    state.needsLogin = true;
+                    setStatus('Ungültiges Passwort.', true);
+                } else {
+                    setStatus(error.message, true);
+                }
+            });
+        }
 
         onUnmounted(() => {
             window.removeEventListener('beforeunload', beforeUnloadHandler);
@@ -408,18 +482,65 @@ const App = {
             selectProfile,
             state,
             weekdayLabels,
-            addProfile
+            addProfile,
+            submitSetup,
+            submitLogin,
+            logout
         };
     },
     template: `
         <main class="container py-4">
             <div class="row justify-content-center">
                 <div class="col-12 col-xl-10">
-                    <div class="card shadow-sm">
+                    <div v-if="state.needsSetup" class="card shadow-sm">
                         <div class="card-body p-4 p-md-5">
                             <div class="mb-4">
-                                <h1 class="h3 mb-2">Rechnungsversand Konfiguration</h1>
-                                <p class="text-secondary mb-0">Übersicht aller automatisierten Versandprozesse</p>
+                                <h1 class="h3 mb-2">Willkommen</h1>
+                                <p class="text-secondary mb-0">Bitte richten Sie ein Passwort ein, um die Anwendung zu schützen.</p>
+                            </div>
+                            <form @submit.prevent="submitSetup">
+                                <div class="mb-3">
+                                    <label class="form-label" for="setupPassword">Passwort</label>
+                                    <input type="password" class="form-control" id="setupPassword" v-model="state.setupPassword" required minlength="4" />
+                                    <div class="form-text">Mindestens 4 Zeichen.</div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label" for="setupPasswordConfirm">Passwort bestätigen</label>
+                                    <input type="password" class="form-control" id="setupPasswordConfirm" v-model="state.setupPasswordConfirm" required />
+                                </div>
+                                <button type="submit" class="btn btn-primary">Passwort setzen</button>
+                            </form>
+                            <p class="status alert mt-4 mb-0" :class="state.statusIsError ? 'alert-danger' : 'alert-success'" role="alert">{{ state.statusMessage }}</p>
+                        </div>
+                    </div>
+
+                    <div v-else-if="state.needsLogin" class="card shadow-sm">
+                        <div class="card-body p-4 p-md-5">
+                            <div class="mb-4">
+                                <h1 class="h3 mb-2">Anmeldung</h1>
+                                <p class="text-secondary mb-0">Bitte geben Sie Ihr Passwort ein.</p>
+                            </div>
+                            <form @submit.prevent="submitLogin">
+                                <div class="mb-3">
+                                    <label class="form-label" for="loginPassword">Passwort</label>
+                                    <input type="password" class="form-control" id="loginPassword" v-model="state.loginPassword" required />
+                                </div>
+                                <button type="submit" class="btn btn-primary">Anmelden</button>
+                            </form>
+                            <p class="status alert mt-4 mb-0" :class="state.statusIsError ? 'alert-danger' : 'alert-success'" role="alert">{{ state.statusMessage }}</p>
+                        </div>
+                    </div>
+
+                    <div v-else class="card shadow-sm">
+                        <div class="card-body p-4 p-md-5">
+                            <div class="mb-4">
+                                <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                                    <div>
+                                        <h1 class="h3 mb-2">Rechnungsversand Konfiguration</h1>
+                                        <p class="text-secondary mb-0">Übersicht aller automatisierten Versandprozesse</p>
+                                    </div>
+                                    <button class="btn btn-outline-secondary btn-sm" type="button" @click="logout">Abmelden</button>
+                                </div>
                             </div>
 
                             <form class="row g-4" @submit="onSubmit">
